@@ -1,0 +1,554 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 110;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		B3BAD98B3063541600D81CB2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B3BAD9753063541500D81CB2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B3BAD97C3063541500D81CB2;
+			remoteInfo = "Stop-Down";
+		};
+		B3BAD9953063541600D81CB2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B3BAD9753063541500D81CB2 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B3BAD97C3063541500D81CB2;
+			remoteInfo = "Stop-Down";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B3BAD97D3063541500D81CB2 /* Stop-Down.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Stop-Down.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B3BAD98A3063541600D81CB2 /* Stop-DownTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Stop-DownTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B3BAD9943063541600D81CB2 /* Stop-DownUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Stop-DownUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		B3BAD97F3063541500D81CB2 /* Stop-Down */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Stop-Down";
+			sourceTree = "<group>";
+		};
+		B3BAD98D3063541600D81CB2 /* Stop-DownTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Stop-DownTests";
+			sourceTree = "<group>";
+		};
+		B3BAD9973063541600D81CB2 /* Stop-DownUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Stop-DownUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B3BAD97A3063541500D81CB2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		B3BAD9873063541600D81CB2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		B3BAD9913063541600D81CB2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B3BAD9743063541500D81CB2 = {
+			isa = PBXGroup;
+			children = (
+				B3BAD97F3063541500D81CB2 /* Stop-Down */,
+				B3BAD98D3063541600D81CB2 /* Stop-DownTests */,
+				B3BAD9973063541600D81CB2 /* Stop-DownUITests */,
+				B3BAD97E3063541500D81CB2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B3BAD97E3063541500D81CB2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B3BAD97D3063541500D81CB2 /* Stop-Down.app */,
+				B3BAD98A3063541600D81CB2 /* Stop-DownTests.xctest */,
+				B3BAD9943063541600D81CB2 /* Stop-DownUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B3BAD97C3063541500D81CB2 /* Stop-Down */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B3BAD99C3063541600D81CB2 /* Build configuration list for PBXNativeTarget "Stop-Down" */;
+			buildPhases = (
+				B3BAD9793063541500D81CB2 /* Sources */,
+				B3BAD97A3063541500D81CB2 /* Frameworks */,
+				B3BAD97B3063541500D81CB2 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				B3BAD97F3063541500D81CB2 /* Stop-Down */,
+			);
+			name = "Stop-Down";
+			productName = "Stop-Down";
+			productReference = B3BAD97D3063541500D81CB2 /* Stop-Down.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B3BAD9893063541600D81CB2 /* Stop-DownTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B3BAD99F3063541600D81CB2 /* Build configuration list for PBXNativeTarget "Stop-DownTests" */;
+			buildPhases = (
+				B3BAD9863063541600D81CB2 /* Sources */,
+				B3BAD9873063541600D81CB2 /* Frameworks */,
+				B3BAD9883063541600D81CB2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B3BAD98C3063541600D81CB2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B3BAD98D3063541600D81CB2 /* Stop-DownTests */,
+			);
+			name = "Stop-DownTests";
+			productName = "Stop-DownTests";
+			productReference = B3BAD98A3063541600D81CB2 /* Stop-DownTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B3BAD9933063541600D81CB2 /* Stop-DownUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B3BAD9A23063541600D81CB2 /* Build configuration list for PBXNativeTarget "Stop-DownUITests" */;
+			buildPhases = (
+				B3BAD9903063541600D81CB2 /* Sources */,
+				B3BAD9913063541600D81CB2 /* Frameworks */,
+				B3BAD9923063541600D81CB2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B3BAD9963063541600D81CB2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B3BAD9973063541600D81CB2 /* Stop-DownUITests */,
+			);
+			name = "Stop-DownUITests";
+			productName = "Stop-DownUITests";
+			productReference = B3BAD9943063541600D81CB2 /* Stop-DownUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B3BAD9753063541500D81CB2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					B3BAD97C3063541500D81CB2 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					B3BAD9893063541600D81CB2 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = B3BAD97C3063541500D81CB2;
+					};
+					B3BAD9933063541600D81CB2 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = B3BAD97C3063541500D81CB2;
+					};
+				};
+			};
+			buildConfigurationList = B3BAD9783063541500D81CB2 /* Build configuration list for PBXProject "Stop-Down" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B3BAD9743063541500D81CB2;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B3BAD97E3063541500D81CB2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B3BAD97C3063541500D81CB2 /* Stop-Down */,
+				B3BAD9893063541600D81CB2 /* Stop-DownTests */,
+				B3BAD9933063541600D81CB2 /* Stop-DownUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B3BAD97B3063541500D81CB2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		B3BAD9883063541600D81CB2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		B3BAD9923063541600D81CB2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B3BAD9793063541500D81CB2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		B3BAD9863063541600D81CB2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		B3BAD9903063541600D81CB2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B3BAD98C3063541600D81CB2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B3BAD97C3063541500D81CB2 /* Stop-Down */;
+			targetProxy = B3BAD98B3063541600D81CB2 /* PBXContainerItemProxy */;
+		};
+		B3BAD9963063541600D81CB2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B3BAD97C3063541500D81CB2 /* Stop-Down */;
+			targetProxy = B3BAD9953063541600D81CB2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		B3BAD99A3063541600D81CB2 /* Debug configuration for PBXProject "Stop-Down" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = R897H75XV4;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B3BAD99B3063541600D81CB2 /* Release configuration for PBXProject "Stop-Down" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = R897H75XV4;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		B3BAD99D3063541600D81CB2 /* Debug configuration for PBXNativeTarget "Stop-Down" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897H75XV4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Hoaglun.com.Stop-Down";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B3BAD99E3063541600D81CB2 /* Release configuration for PBXNativeTarget "Stop-Down" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897H75XV4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Hoaglun.com.Stop-Down";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B3BAD9A03063541600D81CB2 /* Debug configuration for PBXNativeTarget "Stop-DownTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897H75XV4;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Hoaglun.com.Stop-DownTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stop-Down.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stop-Down";
+			};
+			name = Debug;
+		};
+		B3BAD9A13063541600D81CB2 /* Release configuration for PBXNativeTarget "Stop-DownTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897H75XV4;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Hoaglun.com.Stop-DownTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stop-Down.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stop-Down";
+			};
+			name = Release;
+		};
+		B3BAD9A33063541600D81CB2 /* Debug configuration for PBXNativeTarget "Stop-DownUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897H75XV4;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Hoaglun.com.Stop-DownUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Stop-Down";
+			};
+			name = Debug;
+		};
+		B3BAD9A43063541600D81CB2 /* Release configuration for PBXNativeTarget "Stop-DownUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897H75XV4;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Hoaglun.com.Stop-DownUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "Stop-Down";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B3BAD9783063541500D81CB2 /* Build configuration list for PBXProject "Stop-Down" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B3BAD99A3063541600D81CB2 /* Debug configuration for PBXProject "Stop-Down" */,
+				B3BAD99B3063541600D81CB2 /* Release configuration for PBXProject "Stop-Down" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		B3BAD99C3063541600D81CB2 /* Build configuration list for PBXNativeTarget "Stop-Down" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B3BAD99D3063541600D81CB2 /* Debug configuration for PBXNativeTarget "Stop-Down" */,
+				B3BAD99E3063541600D81CB2 /* Release configuration for PBXNativeTarget "Stop-Down" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		B3BAD99F3063541600D81CB2 /* Build configuration list for PBXNativeTarget "Stop-DownTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B3BAD9A03063541600D81CB2 /* Debug configuration for PBXNativeTarget "Stop-DownTests" */,
+				B3BAD9A13063541600D81CB2 /* Release configuration for PBXNativeTarget "Stop-DownTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		B3BAD9A23063541600D81CB2 /* Build configuration list for PBXNativeTarget "Stop-DownUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B3BAD9A33063541600D81CB2 /* Debug configuration for PBXNativeTarget "Stop-DownUITests" */,
+				B3BAD9A43063541600D81CB2 /* Release configuration for PBXNativeTarget "Stop-DownUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B3BAD9753063541500D81CB2 /* Project object */;
+	validationLevel = 1;
+}
