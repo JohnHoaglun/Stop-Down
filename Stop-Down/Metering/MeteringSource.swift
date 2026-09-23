@@ -14,8 +14,28 @@ public protocol MeteringSource: AnyObject {
     var isAvailable: Bool { get }
     /// Called on the main actor for each sample.
     var onSample: (@MainActor (MeterSample) -> Void)? { get set }
+    /// Called on the main actor whenever `isAvailable` (or its explanation)
+    /// changes, including the initial state after `start()`.
+    var onAvailability: (@MainActor (_ available: Bool, _ note: String?) -> Void)? { get set }
     /// Begin emitting samples (no-op if already running).
     func start()
     /// Stop emitting samples.
     func stop()
+    /// Apply the metering context (mode, spot point) to the feed. The real
+    /// camera uses this to position its exposure point of interest (spec FR-3);
+    /// fixture feeds ignore it.
+    ///
+    /// A protocol requirement (with a default implementation below) so calls
+    /// through the `MeteringSource` existential dispatch dynamically to each
+    /// conforming source instead of the no-op default.
+    func applyConfiguration(_ configuration: MeterConfiguration)
+}
+
+extension MeteringSource {
+    /// A short user-facing explanation of why the feed is unavailable;
+    /// `nil` when the feed is available.
+    public var availabilityNote: String? { nil }
+
+    /// Default: fixture feeds (test sources, fakes) ignore the metering context.
+    public func applyConfiguration(_ configuration: MeterConfiguration) {}
 }

@@ -23,7 +23,11 @@ public final class MeteringController {
     /// The equivalent-exposure dial state.
     public var exposure: ExposureState
     /// Whether the active feed is DEBUG test data (not a real camera).
-    public let isTestFeed: Bool
+    public private(set) var isTestFeed: Bool
+    /// Whether the active feed can produce readings right now.
+    public private(set) var isAvailable = true
+    /// Why the feed is unavailable, when applicable (drives the recovery UI).
+    public private(set) var unavailableNote: String?
 
     // MARK: Configuration
 
@@ -38,7 +42,11 @@ public final class MeteringController {
     public var lens: String = "Back Wide" {
         didSet { pushConfig() }
     }
-    public var spotPoint: NormalizedPoint?
+    public var spotPoint: NormalizedPoint? {
+        didSet {
+            if spotPoint != oldValue { pushConfig() }
+        }
+    }
     public var filterCompensationEV: Double = 0 {
         didSet {
             pushConfig()
@@ -59,7 +67,7 @@ public final class MeteringController {
     // MARK: Dependencies
 
     private let engine: MeterEngine
-    private let source: MeteringSource
+    private var source: MeteringSource
 
     // MARK: Init
 
@@ -68,14 +76,22 @@ public final class MeteringController {
         self.isTestFeed = source is TestMeterSource
         self.engine = MeterEngine()
         self.exposure = ExposureState()
-        source.onSample = { [weak self] sample in
-            self?.handleSample(sample)
-        }
+        wire(source)
     }
 
-    /// Convenience for the (DEBUG) default feed.
+    /// Convenience for the product default feed (the real camera).
     public convenience init() {
-        self.init(source: TestMeterSource())
+        self.init(source: CameraMeteringSource())
+    }
+
+    private func wire(_ newSource: MeteringSource) {
+        newSource.onSample = { [weak self] sample in
+            self?.handleSample(sample)
+        }
+        newSource.onAvailability = { [weak self] available, note in
+            self?.isAvailable = available
+            self?.unavailableNote = note
+        }
     }
 
     // MARK: Derived
@@ -88,7 +104,9 @@ public final class MeteringController {
     // MARK: Lifecycle
 
     public func start() {
-        engine.updateConfiguration(configuration())
+        let config = configuration()
+        engine.updateConfiguration(config)
+        source.applyConfiguration(config)
         source.start()
         if let target = liveReading?.ev100 {
             _ = exposure.resolve(targetEV100: target, compensationStops: filterCompensationEV)
@@ -97,6 +115,27 @@ public final class MeteringController {
 
     public func stop() {
         source.stop()
+    }
+
+    /// Swap the active feed: stop the old source, clear readings, wire the new
+    /// source, and start it with the current context (DEBUG feed switch and
+    /// the test seam for source-level unit tests).
+    public func replaceSource(_ newSource: MeteringSource) {
+        let oldSource = source
+        oldSource.stop()
+        oldSource.onSample = nil
+        oldSource.onAvailability = nil
+        source = newSource
+        isTestFeed = newSource is TestMeterSource
+        liveReading = nil
+        heldReading = nil
+        isHeld = false
+        wire(newSource)
+        let config = configuration()
+        engine.reset()
+        engine.updateConfiguration(config)
+        newSource.applyConfiguration(config)
+        newSource.start()
     }
 
     // MARK: Reading
@@ -168,6 +207,39 @@ public final class MeteringController {
     }
 
     private func pushConfig() {
-        engine.updateConfiguration(configuration())
+        let config = configuration()
+        engine.updateConfiguration(config)
+        source.applyConfiguration(config)
     }
+
+    #if DEBUG
+    /// The DEBUG feed selection (spec 8.5): the real camera or the fixture feed.
+    public enum Feed: String, CaseIterable, Identifiable, Sendable {
+        case camera
+        case test
+
+        public var id: String { rawValue }
+
+        public var label: String {
+            switch self {
+            case .camera: "Camera"
+            case .test: "Test data"
+            }
+        }
+    }
+
+    /// The active feed (derived from the source).
+    public var feed: Feed {
+        source is TestMeterSource ? .test : .camera
+    }
+
+    /// Switch the active feed, swapping the source (DEBUG only).
+    public func setFeed(_ newFeed: Feed) {
+        guard newFeed != feed else { return }
+        switch newFeed {
+        case .camera: replaceSource(CameraMeteringSource())
+        case .test: replaceSource(TestMeterSource())
+        }
+    }
+    #endif
 }

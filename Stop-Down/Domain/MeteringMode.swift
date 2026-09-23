@@ -17,7 +17,9 @@ public enum MeteringMode: String, Equatable, Hashable, Sendable, CaseIterable, C
 ///
 /// Orientation-independent, so it can be preserved when the preview layout
 /// changes (spec FR-3).
-public struct NormalizedPoint: Equatable, Hashable, Sendable {
+/// `nonisolated`: a pure value used by both the main actor and the frame
+/// coordinator.
+nonisolated public struct NormalizedPoint: Equatable, Hashable, Sendable {
     public var x: Double
     public var y: Double
 

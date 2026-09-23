@@ -7,7 +7,9 @@ import Foundation
 /// native auto-exposure) separately from the *luminance diagnostics* (luma,
 /// clipping, noise), so the two can be observed and tested independently.
 /// Luminance never alters the EV — it only informs confidence (spec FR-2).
-public struct MeterSample: Equatable, Sendable {
+/// `nonisolated`: a pure value constructed on the camera queue as well as the
+/// main actor.
+nonisolated public struct MeterSample: Equatable, Sendable {
     /// The sample's capture time. This is the engine's notion of "now".
     public var timestamp: Date
 

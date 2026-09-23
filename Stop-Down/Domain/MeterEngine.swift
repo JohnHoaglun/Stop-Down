@@ -52,6 +52,15 @@ public final class MeterEngine {
         lastProcessedTimestamp = nil
     }
 
+    /// Clear all state, including the last reading. Used when the feed source
+    /// is swapped so the new feed starts from a clean slate and its first
+    /// sample is never throttled against, or answered with, the old feed's
+    /// reading (spec 8.5).
+    public func reset() {
+        resetSmoothing()
+        currentReading = nil
+    }
+
     // MARK: - Processing
 
     /// Process one sample and return the resulting reading.

@@ -12,7 +12,8 @@ import Foundation
 ///
 /// This type has no dependency on AVFoundation or SwiftUI — it is the
 /// single source of truth for the math, the solver, and the tests.
-public enum ExposureMath {
+/// `nonisolated`: pure math, callable from any executor.
+nonisolated public enum ExposureMath {
 
     // MARK: - Stop offsets
 

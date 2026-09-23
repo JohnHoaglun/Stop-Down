@@ -33,6 +33,7 @@ public final class TestMeterSource: MeteringSource {
     }
     public var isAvailable: Bool { true }
     public var onSample: (@MainActor (MeterSample) -> Void)?
+    public var onAvailability: (@MainActor (_ available: Bool, _ note: String?) -> Void)?
     public private(set) var isRunning = false
 
     private var task: Task<Void, Never>?

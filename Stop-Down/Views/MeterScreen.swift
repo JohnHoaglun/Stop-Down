@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 
 /// The main meter screen (spec §4.2): live readout, confidence banner, exposure
 /// dials with a lock axis, filter compensation, and Hold/Live.
 ///
-/// It is driven entirely by `MeteringController`, so the feed (DEBUG test data
-/// now, the real camera later) is invisible to this layout.
+/// It is driven entirely by `MeteringController`, so the feed (the real camera
+/// by default; the DEBUG test feed via the DEBUG feed switch) is invisible to
+/// this layout.
 struct MeterScreen: View {
     @State private var controller: MeteringController
     @State private var saveMessage = ""
@@ -20,10 +22,9 @@ struct MeterScreen: View {
             TopBar(controller: controller)
             ReadoutCard(reading: controller.displayedReading)
             ConfidenceBanner(reading: controller.displayedReading)
+            AvailabilityBanner(controller: controller)
             #if DEBUG
-            if controller.isTestFeed {
-                DebugTestBar(controller: controller)
-            }
+            DebugTestBar(controller: controller)
             #endif
             DialControls(controller: controller)
             IncrementAndCompensation(controller: controller)
@@ -166,6 +167,36 @@ private struct ConfidenceBanner: View {
     }
 }
 
+// MARK: - Camera availability
+
+private struct AvailabilityBanner: View {
+    let controller: MeteringController
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        if let note = controller.unavailableNote {
+            VStack(alignment: .leading, spacing: 4) {
+                Label("Camera unavailable", systemImage: "video.slash")
+                    .font(.footnote.weight(.semibold))
+                Text(note)
+                    .font(.caption)
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        openURL(url)
+                    }
+                }
+                .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(.orange)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(8)
+            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("camera-unavailable-banner")
+        }
+    }
+}
+
 // MARK: - DEBUG test bar
 
 #if DEBUG
@@ -174,27 +205,49 @@ private struct DebugTestBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("DEBUG TEST DATA — not a real reading")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
             HStack(spacing: 8) {
+                Text("Feed")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Picker("Feed", selection: feedBinding) {
+                    ForEach(MeteringController.Feed.allCases) { feed in
+                        Text(feed.label).tag(feed)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 220)
+                .accessibilityIdentifier("debug-feed-picker")
+                Spacer()
+                if controller.isTestFeed {
+                    Button("Step") {
+                        controller.stepTestSource()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+            if controller.isTestFeed {
+                Text("DEBUG TEST DATA — not a real reading")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.secondary)
                 Picker("Scenario", selection: scenarioBinding) {
                     ForEach(TestMeterSource.Scenario.allCases) { scenario in
                         Text(scenario.label).tag(scenario)
                     }
                 }
                 .pickerStyle(.segmented)
-                Spacer()
-                Button("Step") {
-                    controller.stepTestSource()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
             }
         }
         .padding(8)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
         .accessibilityIdentifier("debug-test-bar")
+    }
+
+    private var feedBinding: Binding<MeteringController.Feed> {
+        Binding(
+            get: { controller.feed },
+            set: { controller.setFeed($0) }
+        )
     }
 
     private var scenarioBinding: Binding<TestMeterSource.Scenario> {

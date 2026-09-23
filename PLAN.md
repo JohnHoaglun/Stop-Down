@@ -4,7 +4,7 @@
 
 Camera session, native metering, luminance confidence, and Spot control.
 
-Progress: the pure, deterministic meter core (`MeterEngine`), the `MeteringSource` feed seam with the DEBUG-only `TestMeterSource`, the equivalent-exposure dial state (`ExposureState`), the `MeteringController`, and the meter UI (`MeterScreen`) are complete with fixture tests. Remaining for this milestone: the AVFoundation camera-session and native-metering adapter, the luminance-analysis adapter, and Spot point-of-interest wiring (all behind the existing `MeteringSource` seam).
+Progress: the pure, deterministic meter core (`MeterEngine`), the `MeteringSource` feed seam, the DEBUG-only `TestMeterSource`, the equivalent-exposure dial state (`ExposureState`), the `MeteringController`, the meter UI (`MeterScreen`), and the real camera feed (`CameraMeteringSource` with session/permission handling, native AE metadata as the EV authority, `LuminanceAnalyzer` confidence/Spot diagnostics, and mode/Spot configuration) are complete with simulator unit and integration tests. Remaining for this milestone: physical-device validation of camera, permission, and Spot behavior (including the screen→capture point-of-interest transform and `lensAperture` availability on iOS 26 fixed-aperture hardware).
 
 ## Roadmap
 

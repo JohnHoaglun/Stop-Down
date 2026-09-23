@@ -70,6 +70,7 @@ struct MeteringControllerTests {
     @MainActor
     private final class FakeSource: MeteringSource {
         var onSample: (@MainActor (MeterSample) -> Void)?
+        var onAvailability: (@MainActor (_ available: Bool, _ note: String?) -> Void)?
         private(set) var startCount = 0
         private(set) var stopCount = 0
         var isAvailable: Bool { true }
@@ -184,11 +185,14 @@ struct MeteringControllerTests {
     }
 
     #if DEBUG
-    @Test("Default convenience init uses the DEBUG test feed")
-    func defaultFeedIsTestFeed() {
+    @Test("Default convenience init uses the real camera feed")
+    func defaultFeedIsCamera() {
+        // Constructing the source does not request permission; the feed is
+        // never started here (camera behavior is device/UI-verified).
         let controller = MeteringController()
-        #expect(controller.isTestFeed)
-        #expect(controller.testSource != nil)
+        #expect(controller.isTestFeed == false)
+        #expect(controller.feed == .camera)
+        #expect(controller.testSource == nil)
     }
     #endif
 }
