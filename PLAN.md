@@ -4,6 +4,8 @@
 
 Camera session, native metering, luminance confidence, and Spot control.
 
+Progress: the pure, deterministic meter core (`MeterEngine` and its sample/reading/configuration types) is complete with fixture tests. Remaining: the DEBUG-only Test Meter seam, the AVFoundation camera-session and native-metering adapter, luminance-analysis adapter, Spot control wiring, and the meter UI.
+
 ## Roadmap
 
 1. [x] Exposure math and deterministic tests.
