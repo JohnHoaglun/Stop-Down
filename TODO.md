@@ -2,8 +2,9 @@
 
 ## Now
 
-- [ ] Establish the Xcode project, targets, and canonical `scripts/verify.sh` command.
-- [ ] Implement a pure exposure-math engine with deterministic tests.
+- [x] Establish the Xcode project, targets, and canonical `scripts/verify.sh` command.
+- [x] Implement a pure exposure-math engine with deterministic tests.
+- [ ] Reconcile the iOS deployment target (project is 27.0; spec and AGENTS call for iOS 26+).
 - [ ] Define the DEBUG-only Test Meter seam for simulated readings.
 
 ## Later

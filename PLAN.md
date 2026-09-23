@@ -2,11 +2,11 @@
 
 ## Active milestone
 
-Exposure math and deterministic tests.
+Camera session, native metering, luminance confidence, and Spot control.
 
 ## Roadmap
 
-1. Exposure math and deterministic tests.
+1. [x] Exposure math and deterministic tests.
 2. Camera session, native metering, luminance confidence, and Spot control.
 3. Meter UI, Live/Hold workflow, and equivalent-exposure controls.
 4. Local history and optional settings snapshots.

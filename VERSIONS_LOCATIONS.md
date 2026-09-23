@@ -4,7 +4,7 @@
 
 | Value | Current | Authority | Locations |
 | --- | --- | --- | --- |
-| Marketing version | 0.0.0 | Pending Xcode project creation | None yet |
-| Build number | 1 | Pending Xcode project creation | None yet |
+| Marketing version | 1.0 | Xcode build setting | `Stop-Down` target `MARKETING_VERSION` |
+| Build number | 2 | Xcode build setting | `Stop-Down` target `CURRENT_PROJECT_VERSION` |
 
-When an Xcode project is introduced, list each `MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`, and `Info.plist` location here. Increase the build number once per completed file-changing delivery; change marketing version only for intentional releases.
+`GENERATE_INFOPLIST_FILE` is `YES`, so `CFBundleShortVersionString` and `CFBundleVersion` are derived from the build settings; there is no separate hand-maintained `Info.plist` version. Increase the build number once per completed file-changing delivery; change marketing version only for intentional releases.
