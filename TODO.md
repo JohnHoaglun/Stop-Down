@@ -9,7 +9,8 @@
 - [x] Define the DEBUG-only Test Meter seam for simulated readings.
 - [x] Meter UI: EV readout, Hold/Live, equivalent-exposure dials, filter compensation.
 - [x] Camera, native-metering, luminance-confidence, and Spot mode (real `MeteringSource` behind the seam).
-- [ ] Physical-device validation: camera session, permission request/denial/recovery, Spot point-of-interest, and `lensAperture` on iOS 26 fixed-aperture hardware.
+- [x] Meter screen over the live camera preview: lens selection (FR-1), tap-to-position Spot reticle with screen→capture conversion, and the spec §4.7 visual system.
+- [ ] Physical-device validation: camera session, permission request/denial/recovery, preview and reticle placement, lens switching, Spot point-of-interest, and `lensAperture` on iOS 26 fixed-aperture hardware.
 
 ## Later
 

@@ -1,3 +1,5 @@
+import AVFoundation
+import CoreGraphics
 import Foundation
 import Observation
 
@@ -39,7 +41,10 @@ public final class MeteringController {
             }
         }
     }
-    public var lens: String = "Back Wide" {
+    /// Display name of the active lens (spec FR-1). Switching lenses pushes a
+    /// new config, which resets the engine's smoothing window and reconfigures
+    /// the camera session (spec FR-1).
+    public var lens: String = "Wide" {
         didSet { pushConfig() }
     }
     public var spotPoint: NormalizedPoint? {
@@ -99,6 +104,25 @@ public final class MeteringController {
     /// The reading the UI shows: the frozen reading while held, else the live one.
     public var displayedReading: MeterReading? {
         isHeld ? heldReading : liveReading
+    }
+
+    /// The live camera session for the preview layer (spec §4.7); `nil` for
+    /// fixture feeds, which show a plain backdrop instead.
+    public var previewSession: AVCaptureSession? {
+        (source as? PreviewProviding)?.previewSession
+    }
+
+    /// Nominal session buffer size (sensor orientation) for the Spot reticle
+    /// screen→capture conversion (spec FR-3).
+    public var previewBufferSize: CGSize {
+        (source as? PreviewProviding)?.previewBufferSize
+            ?? CGSize(width: 1920, height: 1080)
+    }
+
+    /// The lenses the current feed offers, in display order (spec FR-1);
+    /// empty for fixture feeds.
+    public var availableLensNames: [String] {
+        (source as? LensProviding)?.availableLensNames ?? []
     }
 
     // MARK: Lifecycle

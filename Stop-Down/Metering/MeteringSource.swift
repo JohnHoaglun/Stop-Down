@@ -1,3 +1,5 @@
+import AVFoundation
+import CoreGraphics
 import Foundation
 
 /// The seam between a metering feed (real camera or DEBUG test fixtures) and the
@@ -29,6 +31,25 @@ public protocol MeteringSource: AnyObject {
     /// through the `MeteringSource` existential dispatch dynamically to each
     /// conforming source instead of the no-op default.
     func applyConfiguration(_ configuration: MeterConfiguration)
+}
+
+/// Sources that can render the live camera preview behind the meter UI
+/// (spec §4.7). Fixture feeds do not conform, so the UI falls back to a
+/// plain backdrop.
+@MainActor
+public protocol PreviewProviding: MeteringSource {
+    /// The session the preview layer renders.
+    var previewSession: AVCaptureSession { get }
+    /// Nominal session buffer size (sensor orientation), used to convert
+    /// screen points into capture space for the Spot reticle (spec FR-3).
+    var previewBufferSize: CGSize { get }
+}
+
+/// Sources that expose the lenses the current device supplies (spec FR-1).
+@MainActor
+public protocol LensProviding: MeteringSource {
+    /// Display names of the selectable lenses, in display order.
+    var availableLensNames: [String] { get }
 }
 
 extension MeteringSource {

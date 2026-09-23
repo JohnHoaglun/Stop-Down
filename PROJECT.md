@@ -2,7 +2,7 @@
 
 ## Status
 
-In active development. The exposure-math domain, deterministic meter core, meter UI, and the real AVFoundation camera metering feed are implemented with simulator tests; physical-device validation of camera/permission/Spot behavior is the current focus.
+In active development. The exposure-math domain, deterministic meter core, the meter screen over the live camera preview (lens selection, tap-to-position Spot reticle, spec §4.7 visual system), and the real AVFoundation camera metering feed are implemented with simulator tests; physical-device validation of camera/permission/preview/Spot behavior is the current focus.
 
 ## Purpose
 

@@ -10,7 +10,9 @@ public struct MeterConfiguration: Equatable, Sendable {
 
     public var mode: MeteringMode
     public var lens: String
-    /// Normalized spot point; `nil` when not in Spot mode.
+    /// Normalized spot point in capture (buffer) space, as converted by
+    /// `SpotPointConverter` from the tapped screen point; `nil` when not in
+    /// Spot mode.
     public var spotPoint: NormalizedPoint?
 
     // MARK: Compensation — carried onto readings; does not reset the window
@@ -43,7 +45,7 @@ public struct MeterConfiguration: Equatable, Sendable {
 
     public init(
         mode: MeteringMode = .centerWeighted,
-        lens: String = "Back Wide",
+        lens: String = "Wide",
         spotPoint: NormalizedPoint? = nil,
         filterCompensationEV: Double = 0,
         stableSampleCount: Int = 3,

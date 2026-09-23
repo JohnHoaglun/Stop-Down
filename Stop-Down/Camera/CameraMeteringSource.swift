@@ -12,16 +12,28 @@ import UIKit
 /// `MeteringSource` seam intact. Permission state is surfaced through
 /// `isAvailable` / `onAvailability` so the UI can offer recovery (spec FR-7).
 @MainActor
-public final class CameraMeteringSource: MeteringSource {
+public final class CameraMeteringSource: MeteringSource, PreviewProviding, LensProviding {
 
     public private(set) var isAvailable = false
     public private(set) var availabilityNote: String?
     public var onSample: (@MainActor (MeterSample) -> Void)?
     public var onAvailability: (@MainActor (_ available: Bool, _ note: String?) -> Void)?
 
+    /// The lenses this device supplies (spec FR-1: expose only what the
+    /// current device provides), in display order.
+    public private(set) var availableLenses: [CameraLens]
+    /// The display name of the lens the session currently uses (spec FR-1).
+    public private(set) var selectedLensName: String
+    /// The session the preview layer should render (spec §4.7).
+    public var previewSession: AVCaptureSession { coordinator.session }
+    /// Nominal session buffer size (sensor orientation) for Spot-space math.
+    public var previewBufferSize: CGSize { CameraFrameCoordinator.previewBufferSize }
+    public var availableLensNames: [String] { availableLenses.map(\.displayName) }
+
     /// The metering context last applied to the camera.
     private var activeMode: MeteringMode = .centerWeighted
     private var activeSpot: NormalizedPoint?
+    private var selectedLensID: String
 
     private let coordinator = CameraFrameCoordinator()
     private var device: AVCaptureDevice?
@@ -30,6 +42,11 @@ public final class CameraMeteringSource: MeteringSource {
     private var authorizationObserver: NSObjectProtocol?
 
     public init() {
+        let lenses = CameraLensCatalog.availableLenses()
+        let preferred = CameraLensCatalog.preferredLens(lenses)
+        availableLenses = lenses
+        selectedLensID = preferred?.id ?? "wide"
+        selectedLensName = preferred?.displayName ?? "Wide"
         coordinator.onSample = { [weak self] sample in
             Task { @MainActor [weak self] in
                 self?.onSample?(sample)
@@ -68,7 +85,9 @@ public final class CameraMeteringSource: MeteringSource {
         guard isAvailable else { return }
         guard !sessionRequested else { return }
         sessionRequested = true
-        coordinator.start(mode: activeMode, spotPoint: activeSpot)
+        let deviceType = availableLenses.first(where: { $0.id == selectedLensID })?.deviceType
+            ?? .builtInWideAngleCamera
+        coordinator.start(deviceType: deviceType, mode: activeMode, spotPoint: activeSpot)
     }
 
     public func stop() {
@@ -79,12 +98,23 @@ public final class CameraMeteringSource: MeteringSource {
 
     /// Apply the metering context: in Spot mode the normalized point becomes
     /// the camera's exposure point of interest; Average re-centers it
-    /// (spec FR-3, §4.3).
+    /// (spec FR-3, §4.3). A lens change reconfigures the session (spec FR-1);
+    /// the engine separately resets its smoothing window on the same change.
     public func applyConfiguration(_ configuration: MeterConfiguration) {
         let spot = configuration.mode == .spot ? configuration.spotPoint?.clamped() : nil
-        guard spot != activeSpot || configuration.mode != activeMode else { return }
+        let lensChanged = configuration.lens != selectedLensName
+        guard spot != activeSpot || configuration.mode != activeMode || lensChanged else { return }
         activeMode = configuration.mode
         activeSpot = spot
+        if lensChanged {
+            if let lens = availableLenses.first(where: { $0.displayName == configuration.lens }) {
+                selectedLensID = lens.id
+                selectedLensName = lens.displayName
+                coordinator.setLens(lens.deviceType)
+            }
+            // An unknown lens name leaves the current lens untouched; the
+            // engine still reset its smoothing window for the config change.
+        }
         coordinator.applyMetering(mode: configuration.mode, spotPoint: spot)
     }
 
@@ -151,7 +181,7 @@ nonisolated final class CameraFrameCoordinator: NSObject, AVCaptureVideoDataOutp
     /// Called (off-main) with each paced sample.
     var onSample: (@Sendable (MeterSample) -> Void)?
 
-    private let session = AVCaptureSession()
+    let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "stop-down.camera.session")
     private let analysisQueue = DispatchQueue(label: "stop-down.camera.analysis")
     private var device: AVCaptureDevice?
@@ -162,20 +192,26 @@ nonisolated final class CameraFrameCoordinator: NSObject, AVCaptureVideoDataOutp
     /// Emit at most ~10 Hz, matching the engine's rate cap (spec FR-8).
     private let emitInterval: TimeInterval = 0.1
 
-    func start(mode: MeteringMode, spotPoint: NormalizedPoint?) {
+    /// The session preset drives both the preview and the data output, so the
+    /// buffer aspect used for Spot-space math (spec FR-3) is the nominal
+    /// 1920×1080 of this preset (sensor orientation).
+    static let previewBufferSize = CGSize(width: 1920, height: 1080)
+
+    func start(deviceType: AVCaptureDevice.DeviceType, mode: MeteringMode, spotPoint: NormalizedPoint?) {
         sessionQueue.async {
             guard !self.session.isRunning else {
-                self.applyMetering(mode: mode, spotPoint: spotPoint)
+                self.applyMeteringLocked(mode: mode, spotPoint: spotPoint)
                 return
             }
-            // Re-fetch on the session queue rather than capturing the device
+            // Re-resolve on the session queue rather than capturing the device
             // across the queue boundary (AVCaptureDevice is not Sendable).
-            guard let device = AVCaptureDevice.default(for: .video) else { return }
+            // Falls back to the default back camera so metering never depends
+            // on a specific lens being present (spec FR-1).
+            let device = Self.backDevice(for: deviceType)
+            guard let device else { return }
             self.device = device
             self.session.beginConfiguration()
-            // Luma statistics only — the smallest preset keeps the frame
-            // pipeline cheap (no preview is shown in this milestone).
-            self.session.sessionPreset = .vga640x480
+            self.session.sessionPreset = .hd1920x1080
             if let input = try? AVCaptureDeviceInput(device: device),
                self.session.canAddInput(input) {
                 self.session.addInput(input)
@@ -190,8 +226,53 @@ nonisolated final class CameraFrameCoordinator: NSObject, AVCaptureVideoDataOutp
                 self.session.addOutput(output)
             }
             self.session.commitConfiguration()
-            self.applyMetering(mode: mode, spotPoint: spotPoint)
+            self.applyMeteringLocked(mode: mode, spotPoint: spotPoint)
             self.session.startRunning()
+        }
+    }
+
+    /// Swap the active lens while the session runs (spec FR-1). No-op when the
+    /// session is stopped — the next `start` receives the lens explicitly.
+    func setLens(_ deviceType: AVCaptureDevice.DeviceType) {
+        sessionQueue.async {
+            guard self.session.isRunning else { return }
+            self.replaceInput(deviceType: deviceType)
+        }
+    }
+
+    /// Resolve a back-position device of the requested type, falling back to
+    /// the default back camera.
+    private static func backDevice(for deviceType: AVCaptureDevice.DeviceType) -> AVCaptureDevice? {
+        AVCaptureDevice.DiscoverySession(
+            deviceTypes: [deviceType],
+            mediaType: .video,
+            position: .back
+        ).devices.first ?? AVCaptureDevice.default(for: .video)
+    }
+
+    /// Replace the video input with the requested lens, re-applying the
+    /// metering point of interest to the new device. If the swap fails, the
+    /// previous input is restored so the session keeps running (spec FR-1:
+    /// lens switching reconfigures the session cleanly).
+    private func replaceInput(deviceType: AVCaptureDevice.DeviceType) {
+        guard let newDevice = Self.backDevice(for: deviceType),
+              let previousInput = self.session.inputs.first as? AVCaptureDeviceInput,
+              previousInput.device !== newDevice
+        else { return }
+        let previousDevice = previousInput.device
+        self.session.beginConfiguration()
+        self.session.removeInput(previousInput)
+        if let input = try? AVCaptureDeviceInput(device: newDevice), self.session.canAddInput(input) {
+            self.session.addInput(input)
+            self.device = newDevice
+        } else {
+            self.session.addInput(previousInput)
+        }
+        self.session.commitConfiguration()
+        if self.device !== previousDevice {
+            // The exposure point of interest lives on the device, not the
+            // session — re-apply it to whichever device won the swap.
+            self.applyMeteringLocked()
         }
     }
 
@@ -212,18 +293,26 @@ nonisolated final class CameraFrameCoordinator: NSObject, AVCaptureVideoDataOutp
 
     /// Position the camera's exposure point of interest (spec FR-3).
     ///
-    /// v1 is portrait-first and passes the normalized UI point through; when
-    /// the live preview lands, screen→capture-space conversion is resolved
-    /// there (spec FR-3, orientation).
+    /// The spot point is already in capture (buffer) space — the UI converts
+    /// screen coordinates through `SpotPointConverter` before publishing it
+    /// (spec FR-3, orientation).
     func applyMetering(mode: MeteringMode, spotPoint: NormalizedPoint?) {
         sessionQueue.async {
-            guard let device = self.device else { return }
-            self.meteringLock.lock()
-            self.meteringMode = mode
-            self.meteringSpot = spotPoint
-            self.meteringLock.unlock()
-            let target: CGPoint
-            if let spot = spotPoint {
+            self.applyMeteringLocked(mode: mode, spotPoint: spotPoint)
+        }
+    }
+
+    /// Session-queue-only core of `applyMetering` (no hop), so a lens swap
+    /// can re-apply the stored metering context to the new device in order.
+    private func applyMeteringLocked(mode: MeteringMode? = nil, spotPoint: NormalizedPoint? = nil) {
+        guard let device = self.device else { return }
+        meteringLock.lock()
+        if let mode { meteringMode = mode }
+        if let spotPoint { meteringSpot = spotPoint }
+        let currentSpot = meteringSpot
+        meteringLock.unlock()
+        let target: CGPoint
+        if let spot = currentSpot {
             target = CGPoint(
                 x: min(max(CGFloat(spot.x), 0), 1),
                 y: min(max(CGFloat(spot.y), 0), 1)
@@ -236,7 +325,7 @@ nonisolated final class CameraFrameCoordinator: NSObject, AVCaptureVideoDataOutp
         if abs(current.x - target.x) > 0.001 || abs(current.y - target.y) > 0.001 {
             // The header documents that setting the point of interest alone
             // does not apply it — the exposure mode must be (re)set.
-            let mode = device.exposureMode
+            let exposureMode = device.exposureMode
             do {
                 try device.lockForConfiguration()
             } catch {
@@ -244,8 +333,7 @@ nonisolated final class CameraFrameCoordinator: NSObject, AVCaptureVideoDataOutp
             }
             defer { device.unlockForConfiguration() }
             device.exposurePointOfInterest = target
-            device.exposureMode = mode
-        }
+            device.exposureMode = exposureMode
         }
     }
 

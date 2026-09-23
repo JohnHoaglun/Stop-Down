@@ -13,10 +13,11 @@ public enum MeteringMode: String, Equatable, Hashable, Sendable, CaseIterable, C
     }
 }
 
-/// A point normalized to the preview's 0...1 unit square.
+/// A point in a 0...1 unit square.
 ///
-/// Orientation-independent, so it can be preserved when the preview layout
-/// changes (spec FR-3).
+/// Metering contexts store these in the capture buffer's unit square (the
+/// space `exposurePointOfInterest` and the luma spot box use); screen
+/// coordinates are converted with `SpotPointConverter` (spec FR-3).
 /// `nonisolated`: a pure value used by both the main actor and the frame
 /// coordinator.
 nonisolated public struct NormalizedPoint: Equatable, Hashable, Sendable {

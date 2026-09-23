@@ -1,8 +1,10 @@
 import SwiftUI
 import UIKit
 
-/// The main meter screen (spec §4.2): live readout, confidence banner, exposure
-/// dials with a lock axis, filter compensation, and Hold/Live.
+/// The main meter screen (spec §4.2, §4.7): the live camera preview as the
+/// background with a high-contrast, accessible control layer — a circular
+/// central EV dial, lens selection, Average/Spot modes, the equivalent-exposure
+/// wheels in the lower third, and Hold/Save.
 ///
 /// It is driven entirely by `MeteringController`, so the feed (the real camera
 /// by default; the DEBUG test feed via the DEBUG feed switch) is invisible to
@@ -18,32 +20,132 @@ struct MeterScreen: View {
     }
 
     var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                background
+                controls
+                spotReticle(viewSize: proxy.size)
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .contentShape(Rectangle())
+            .onTapGesture { location in
+                handleTap(at: location, viewSize: proxy.size)
+            }
+        }
+        .onAppear { controller.start() }
+        .onDisappear { controller.stop() }
+        .preferredColorScheme(.dark)
+        .animation(.easeInOut(duration: 0.15), value: saveMessage)
+    }
+
+    // MARK: Background
+
+    @ViewBuilder
+    private var background: some View {
+        if let session = controller.previewSession {
+            CameraPreviewView(session: session)
+                .ignoresSafeArea()
+                .accessibilityHidden(true)
+        } else {
+            MeterTheme.background.ignoresSafeArea()
+        }
+        // Subtle scrims keep the top/bottom control layers legible outdoors
+        // (spec §4.7) without hiding the framed scene.
+        VStack {
+            LinearGradient(
+                colors: [.black.opacity(0.5), .clear],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 140)
+            Spacer()
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.6)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 320)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    // MARK: Control layer
+
+    private var controls: some View {
         VStack(spacing: 12) {
             TopBar(controller: controller)
-            ReadoutCard(reading: controller.displayedReading)
-            ConfidenceBanner(reading: controller.displayedReading)
             AvailabilityBanner(controller: controller)
             #if DEBUG
             DebugTestBar(controller: controller)
             #endif
-            DialControls(controller: controller)
+            Spacer(minLength: 8)
+            CenterDial(
+                reading: controller.displayedReading,
+                isHeld: controller.isHeld
+            )
+            ConfidenceBanner(reading: controller.displayedReading)
+            Spacer(minLength: 8)
+            ExposureWheels(controller: controller)
             IncrementAndCompensation(controller: controller)
             if !saveMessage.isEmpty {
                 Text(saveMessage)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(MeterTheme.secondary)
                     .transition(.opacity)
             }
-            Spacer(minLength: 0)
             BottomBar(controller: controller) {
                 save()
             }
         }
-        .padding()
-        .onAppear { controller.start() }
-        .onDisappear { controller.stop() }
-        .animation(.easeInOut(duration: 0.15), value: saveMessage)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
     }
+
+    // MARK: Spot reticle + tap-to-meter
+
+    /// The movable reticle in Spot mode (spec §4.3). The stored point is in
+    /// capture space; the inverse conversion positions it on screen.
+    @ViewBuilder
+    private func spotReticle(viewSize: CGSize) -> some View {
+        if controller.mode == .spot, let spot = controller.spotPoint {
+            let point = SpotPointConverter.viewPoint(
+                bufferPoint: spot,
+                viewSize: viewSize,
+                bufferSize: controller.previewBufferSize,
+                rotation: .right
+            )
+            SpotReticleView()
+                .position(
+                    x: point.x * viewSize.width,
+                    y: point.y * viewSize.height
+                )
+                .accessibilityLabel("Spot metering point")
+                .accessibilityIdentifier("spot-reticle")
+        }
+    }
+
+    /// Tapping the framed scene in Spot mode moves the reticle (spec §4.3):
+    /// the screen point is converted to capture space before it is stored.
+    private func handleTap(at location: CGPoint, viewSize: CGSize) {
+        guard controller.mode == .spot else { return }
+        guard viewSize.width > 0, viewSize.height > 0 else { return }
+        let viewPoint = CGPoint(
+            x: location.x / viewSize.width,
+            y: location.y / viewSize.height
+        )
+        let bufferPoint = SpotPointConverter.bufferPoint(
+            viewPoint: viewPoint,
+            viewSize: viewSize,
+            bufferSize: controller.previewBufferSize,
+            rotation: .right
+        )
+        controller.spotPoint = bufferPoint
+    }
+
+    // MARK: Save (history milestone placeholder)
 
     private func save() {
         saveMessage = "History saving arrives with the persistence milestone."
@@ -55,17 +157,36 @@ struct MeterScreen: View {
     }
 }
 
-// MARK: - Top bar
+// MARK: - Theme (spec §4.7 design tokens)
+
+private enum MeterTheme {
+    static let background = Color(hex: 0x0B0B0D)
+    static let panel = Color.black.opacity(0.68)
+    static let primary = Color(hex: 0xF5F2EA)
+    static let secondary = Color(hex: 0xA6A8AD)
+    static let accent = Color(hex: 0xFFB000)
+    static let warning = Color(hex: 0xFF7A45)
+    static let success = Color(hex: 0x58B77B)
+}
+
+private extension Color {
+    init(hex: UInt32) {
+        self.init(
+            red: Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >> 8) & 0xFF) / 255,
+            blue: Double(hex & 0xFF) / 255
+        )
+    }
+}
+
+// MARK: - Top bar (lens + mode)
 
 private struct TopBar: View {
     @Bindable var controller: MeteringController
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(controller.lens)
-                .font(.headline)
-                .accessibilityLabel("Selected lens")
-                .accessibilityIdentifier("lens-label")
+            lensControl
             Spacer()
             Picker("Metering mode", selection: $controller.mode) {
                 ForEach(MeteringMode.allCases, id: \.self) { mode in
@@ -73,44 +194,99 @@ private struct TopBar: View {
                 }
             }
             .pickerStyle(.segmented)
-            .frame(maxWidth: 200)
+            .frame(maxWidth: 180)
             .accessibilityIdentifier("mode-control")
+        }
+    }
+
+    @ViewBuilder
+    private var lensControl: some View {
+        if controller.availableLensNames.count > 1 {
+            Picker("Lens", selection: $controller.lens) {
+                ForEach(controller.availableLensNames, id: \.self) { name in
+                    Text(name).tag(name)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: 210)
+            .accessibilityLabel("Selected lens")
+            .accessibilityIdentifier("lens-picker")
+        } else {
+            Text(controller.lens)
+                .font(.headline)
+                .foregroundStyle(MeterTheme.primary)
+                .accessibilityLabel("Selected lens")
+                .accessibilityIdentifier("lens-label")
         }
     }
 }
 
-// MARK: - Readout
+// MARK: - Central EV dial (spec §4.7)
 
-private struct ReadoutCard: View {
+private struct CenterDial: View {
     let reading: MeterReading?
+    let isHeld: Bool
+
+    private static let dialSize: CGFloat = 220
 
     var body: some View {
-        VStack(spacing: 6) {
-            if let ev = reading?.ev100 {
-                Text(evText(ev))
-                    .font(.system(size: 68, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                    .accessibilityLabel("Exposure value")
-                    .accessibilityValue(evText(ev))
-                    .accessibilityIdentifier("ev-readout")
-            } else {
-                Text("—")
-                    .font(.system(size: 68, weight: .semibold, design: .rounded))
-                    .accessibilityLabel("No reading")
-                    .accessibilityIdentifier("ev-readout")
-            }
-            if let reading {
-                HStack(spacing: 12) {
-                    Text(reading.mode.displayName)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
-                    StatePill(isHeld: false, confidence: reading.confidence)
+        let ev = reading?.ev100
+        let ring = ringState
+        ZStack {
+            // Thin partial state ring (6 pt) around the dial (spec §4.7).
+            Circle()
+                .trim(from: 0, to: ring.fraction)
+                .stroke(ring.color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Circle()
+                .inset(by: 10)
+                .fill(MeterTheme.panel)
+            VStack(spacing: 6) {
+                Text(modeLabel)
+                    .font(.caption2.weight(.semibold))
+                    .tracking(1.5)
+                    .foregroundStyle(MeterTheme.secondary)
+                if let ev {
+                    Text(evText(ev))
+                        .font(.system(size: 64, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(MeterTheme.primary)
+                        .contentTransition(.numericText())
+                        .accessibilityLabel("Exposure value")
+                        .accessibilityValue(evText(ev))
+                        .accessibilityIdentifier("ev-readout")
+                } else {
+                    Text("—")
+                        .font(.system(size: 64, weight: .bold, design: .rounded))
+                        .foregroundStyle(MeterTheme.secondary)
+                        .accessibilityLabel("No reading")
+                        .accessibilityIdentifier("ev-readout")
                 }
+                StatePill(isHeld: isHeld, confidence: reading?.confidence)
             }
+            .padding(28)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
+        .frame(width: Self.dialSize, height: Self.dialSize)
+    }
+
+    private var modeLabel: String {
+        (reading?.mode.displayName ?? "Average").uppercased()
+    }
+
+    /// The ring's arc fraction and color for the current state (spec §4.7:
+    /// the thin partial ring is the state indicator).
+    private var ringState: (fraction: CGFloat, color: Color) {
+        guard reading?.ev100 != nil else {
+            return (0.35, MeterTheme.secondary)
+        }
+        let confidence = reading?.confidence ?? .stabilizing
+        if confidence == .stable {
+            return (1.0, MeterTheme.success)
+        }
+        if confidence == .stabilizing {
+            return (0.35, MeterTheme.accent)
+        }
+        return (1.0, MeterTheme.warning)
     }
 
     private func evText(_ ev: Double) -> String {
@@ -120,19 +296,20 @@ private struct ReadoutCard: View {
 
 private struct StatePill: View {
     let isHeld: Bool
-    let confidence: ConfidenceLevel
+    let confidence: ConfidenceLevel?
 
     var body: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(isHeld ? Color.orange : Color.green)
+                .fill(isHeld ? MeterTheme.accent : MeterTheme.success)
                 .frame(width: 8, height: 8)
             Text(isHeld ? "HOLD" : "LIVE")
                 .font(.caption.weight(.bold))
-            if !isHeld && confidence == .stabilizing {
+                .foregroundStyle(MeterTheme.primary)
+            if !isHeld, let confidence, confidence == .stabilizing {
                 Text("Stabilizing…")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(MeterTheme.secondary)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -156,10 +333,10 @@ private struct ConfidenceBanner: View {
                         .font(.caption)
                 }
             }
-            .foregroundStyle(reading.ev100 == nil ? Color.secondary : Color.orange)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundStyle(reading.ev100 == nil ? MeterTheme.secondary : MeterTheme.warning)
+            .frame(maxWidth: 340, alignment: .leading)
             .padding(8)
-            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+            .background(MeterTheme.panel, in: RoundedRectangle(cornerRadius: 10))
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Low confidence: \((reading.confidence.guidance) ?? "No reading yet")")
             .accessibilityIdentifier("confidence-banner")
@@ -186,14 +363,33 @@ private struct AvailabilityBanner: View {
                     }
                 }
                 .font(.caption.weight(.semibold))
+                .tint(MeterTheme.accent)
             }
-            .foregroundStyle(.orange)
+            .foregroundStyle(MeterTheme.warning)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(8)
-            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+            .background(MeterTheme.panel, in: RoundedRectangle(cornerRadius: 10))
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("camera-unavailable-banner")
         }
+    }
+}
+
+// MARK: - Spot reticle
+
+private struct SpotReticleView: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(MeterTheme.accent, lineWidth: 2)
+            Circle()
+                .fill(MeterTheme.accent.opacity(0.15))
+            Circle()
+                .fill(MeterTheme.accent)
+                .frame(width: 4, height: 4)
+        }
+        .frame(width: 56, height: 56)
+        .accessibilityHidden(true)
     }
 }
 
@@ -208,7 +404,7 @@ private struct DebugTestBar: View {
             HStack(spacing: 8) {
                 Text("Feed")
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(MeterTheme.secondary)
                 Picker("Feed", selection: feedBinding) {
                     ForEach(MeteringController.Feed.allCases) { feed in
                         Text(feed.label).tag(feed)
@@ -224,12 +420,13 @@ private struct DebugTestBar: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                    .tint(MeterTheme.accent)
                 }
             }
             if controller.isTestFeed {
                 Text("DEBUG TEST DATA — not a real reading")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(MeterTheme.secondary)
                 Picker("Scenario", selection: scenarioBinding) {
                     ForEach(TestMeterSource.Scenario.allCases) { scenario in
                         Text(scenario.label).tag(scenario)
@@ -239,7 +436,7 @@ private struct DebugTestBar: View {
             }
         }
         .padding(8)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+        .background(MeterTheme.panel, in: RoundedRectangle(cornerRadius: 10))
         .accessibilityIdentifier("debug-test-bar")
     }
 
@@ -259,9 +456,9 @@ private struct DebugTestBar: View {
 }
 #endif
 
-// MARK: - Exposure dials
+// MARK: - Exposure wheels (lower third, spec §4.7)
 
-private struct DialControls: View {
+private struct ExposureWheels: View {
     @Bindable var controller: MeteringController
 
     var body: some View {
@@ -286,7 +483,7 @@ private struct DialControls: View {
                 controller.setLockedAxis(axis)
             } label: {
                 Image(systemName: isLocked ? "lock.fill" : "lock.open")
-                    .foregroundStyle(isLocked ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(isLocked ? MeterTheme.accent : MeterTheme.secondary)
                     .frame(width: 22)
             }
             .accessibilityLabel("\(axis.displayName) \(isLocked ? "locked" : "not locked")")
@@ -295,13 +492,13 @@ private struct DialControls: View {
 
             Text(axis.displayName)
                 .font(.subheadline)
-                .foregroundStyle(isLocked ? Color.accentColor : Color.primary)
+                .foregroundStyle(isLocked ? MeterTheme.accent : MeterTheme.primary)
                 .frame(width: 72, alignment: .leading)
 
             if isSolved {
                 Text("auto")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(MeterTheme.secondary)
             }
 
             Spacer(minLength: 8)
@@ -311,12 +508,14 @@ private struct DialControls: View {
             } label: {
                 Image(systemName: "minus.circle.fill").font(.title3)
             }
+            .tint(MeterTheme.primary)
             .accessibilityLabel("Decrease \(axis.displayName)")
             .accessibilityIdentifier("dial-decrease-\(axis.rawValue)")
 
             Text(value)
                 .font(.title3.weight(.semibold))
                 .monospacedDigit()
+                .foregroundStyle(MeterTheme.primary)
                 .frame(minWidth: 84, alignment: .trailing)
                 .accessibilityLabel("\(axis.displayName)")
                 .accessibilityValue(value)
@@ -327,13 +526,14 @@ private struct DialControls: View {
             } label: {
                 Image(systemName: "plus.circle.fill").font(.title3)
             }
+            .tint(MeterTheme.primary)
             .accessibilityLabel("Increase \(axis.displayName)")
             .accessibilityIdentifier("dial-increase-\(axis.rawValue)")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(
-            isLocked ? Color.accentColor.opacity(0.12) : Color.clear,
+            isLocked ? MeterTheme.accent.opacity(0.14) : MeterTheme.panel,
             in: RoundedRectangle(cornerRadius: 12)
         )
     }
@@ -357,10 +557,11 @@ private struct IncrementAndCompensation: View {
     @Bindable var controller: MeteringController
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             HStack {
                 Text("Stop increment")
                     .font(.subheadline)
+                    .foregroundStyle(MeterTheme.secondary)
                 Spacer()
                 Picker("Stop increment", selection: $controller.increment) {
                     Text("Full").tag(StopIncrement.full)
@@ -375,34 +576,45 @@ private struct IncrementAndCompensation: View {
             HStack {
                 Label(compText, systemImage: "circle.lefthalf.filled")
                     .font(.subheadline)
+                    .foregroundStyle(MeterTheme.secondary)
                 Spacer()
                 Button {
                     bump(-1)
                 } label: {
                     Image(systemName: "minus.circle.fill").font(.title3)
                 }
+                .tint(MeterTheme.primary)
                 .accessibilityLabel("Decrease filter compensation")
                 .accessibilityIdentifier("comp-decrease")
+                Text(compValueText)
+                    .font(.title3.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(MeterTheme.primary)
+                    .frame(minWidth: 44, alignment: .trailing)
                 Button {
                     bump(1)
                 } label: {
                     Image(systemName: "plus.circle.fill").font(.title3)
                 }
+                .tint(MeterTheme.primary)
                 .accessibilityLabel("Increase filter compensation")
                 .accessibilityIdentifier("comp-increase")
             }
         }
+        .padding(10)
+        .background(MeterTheme.panel, in: RoundedRectangle(cornerRadius: 12))
     }
 
     private var compText: String {
+        "Filter compensation"
+    }
+
+    private var compValueText: String {
         let c = controller.filterCompensationEV
-        let formatted: String
         if abs(c - c.rounded()) < 1e-6 {
-            formatted = "+\(Int(c.rounded()))"
-        } else {
-            formatted = String(format: "+%.1f", c)
+            return "+\(Int(c.rounded()))"
         }
-        return "Filter compensation \(formatted) stops"
+        return String(format: "+%.1f", c)
     }
 
     private func bump(_ dir: Int) {
@@ -434,6 +646,7 @@ private struct BottomBar: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .tint(MeterTheme.accent)
             .accessibilityIdentifier("hold-live")
 
             Button {
@@ -442,6 +655,7 @@ private struct BottomBar: View {
                 Label("Save", systemImage: "square.and.arrow.down")
             }
             .buttonStyle(.bordered)
+            .tint(MeterTheme.primary)
             .accessibilityIdentifier("save")
         }
         .controlSize(.large)
