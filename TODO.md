@@ -10,6 +10,7 @@
 - [x] Meter UI: EV readout, Hold/Live, equivalent-exposure dials, filter compensation.
 - [x] Camera, native-metering, luminance-confidence, and Spot mode (real `MeteringSource` behind the seam).
 - [x] Meter screen over the live camera preview: lens selection (FR-1), tap-to-position Spot reticle with screen→capture conversion, and the spec §4.7 visual system.
+- [x] Nearby equivalent-combinations list below the wheels (tap a row to apply) and auto-Hold on dial edits while Live (spec §4.3).
 - [ ] Physical-device validation: camera session, permission request/denial/recovery, preview and reticle placement, lens switching, Spot point-of-interest, and `lensAperture` on iOS 26 fixed-aperture hardware.
 
 ## Later

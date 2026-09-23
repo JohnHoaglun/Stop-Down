@@ -88,6 +88,7 @@ struct MeterScreen: View {
             ConfidenceBanner(reading: controller.displayedReading)
             Spacer(minLength: 8)
             ExposureWheels(controller: controller)
+            CombinationList(controller: controller)
             IncrementAndCompensation(controller: controller)
             if !saveMessage.isEmpty {
                 Text(saveMessage)
@@ -548,6 +549,73 @@ private struct ExposureWheels: View {
         let target = index + offset
         guard series.indices.contains(target) else { return current }
         return series[target].value
+    }
+}
+
+// MARK: - Nearby equivalent combinations (spec §4.3)
+
+/// The compact list below the wheels: nearby equivalent combinations for the
+/// current target EV. Tapping a row applies it (the anchor dial takes the
+/// row's value; the engine re-solves the third axis).
+private struct CombinationList: View {
+    let controller: MeteringController
+
+    var body: some View {
+        let combinations = controller.nearbyCombinations
+        if !combinations.isEmpty {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(combinations) { combination in
+                    Button {
+                        controller.applyCombination(combination)
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text(
+                                ExposureValueTables.displayLabel(
+                                    for: .iso,
+                                    value: combination.settings.iso.value
+                                )
+                            )
+                            .frame(width: 52, alignment: .trailing)
+                            Text(
+                                ExposureValueTables.displayLabel(
+                                    for: .aperture,
+                                    value: combination.settings.aperture.value
+                                )
+                            )
+                            .frame(width: 64, alignment: .trailing)
+                            Text(
+                                ExposureValueTables.displayLabel(
+                                    for: .shutter,
+                                    value: combination.settings.shutter.value
+                                )
+                            )
+                            .frame(width: 72, alignment: .trailing)
+                            Spacer(minLength: 0)
+                        }
+                        .font(.caption.monospacedDigit())
+                        .contentTransition(.numericText())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(MeterTheme.primary)
+                    .accessibilityLabel(appliedLabel(combination))
+                    .accessibilityHint("Applies this equivalent exposure")
+                }
+            }
+            .padding(6)
+            .background(MeterTheme.panel, in: RoundedRectangle(cornerRadius: 10))
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Equivalent exposures")
+            .accessibilityIdentifier("equivalent-list")
+        }
+    }
+
+    private func appliedLabel(_ combination: EquivalentCombination) -> String {
+        "Apply ISO \(ExposureValueTables.displayLabel(for: .iso, value: combination.settings.iso.value)), "
+            + "\(ExposureValueTables.displayLabel(for: .aperture, value: combination.settings.aperture.value)), "
+            + "\(ExposureValueTables.displayLabel(for: .shutter, value: combination.settings.shutter.value))"
     }
 }
 

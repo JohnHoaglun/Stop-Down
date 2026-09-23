@@ -191,8 +191,32 @@ public final class MeteringController {
 
     // MARK: Exposure dials
 
-    /// Turn a dial to `value`. Re-solves the solved axis for the current target EV.
+    /// Nearby equivalent combinations for the displayed target EV (spec
+    /// §4.3): the compact list shown below the wheels. Empty until a reading
+    /// exists.
+    public var nearbyCombinations: [EquivalentCombination] {
+        guard let ev = displayedReading?.ev100 else { return [] }
+        return EquivalentCombinationFinder.nearbyCombinations(
+            state: exposure,
+            targetEV100: ev,
+            compensationStops: filterCompensationEV
+        )
+    }
+
+    /// Apply a nearby combination row (spec §4.3): the anchor dial takes the
+    /// row's anchor value and the engine re-solves the third axis for the
+    /// same target EV.
+    public func applyCombination(_ combination: EquivalentCombination) {
+        setDial(exposure.anchorAxis, to: combination.settings[exposure.anchorAxis].value)
+    }
+
+    /// Turn a dial to `value`. Re-solves the solved axis for the current
+    /// target EV. Turning a wheel while Live freezes the reading first so the
+    /// edit is applied against a stable target (spec §4.3).
     public func setDial(_ axis: ExposureAxis, to value: Double) {
+        if !isHeld, liveReading?.ev100 != nil {
+            hold()
+        }
         let target = displayedReading?.ev100 ?? 0
         _ = exposure.set(value, for: axis, targetEV100: target)
     }

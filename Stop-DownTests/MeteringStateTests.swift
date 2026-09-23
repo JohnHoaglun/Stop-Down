@@ -184,6 +184,64 @@ struct MeteringControllerTests {
         #expect(abs(controller.exposure.value(of: .shutter) - 1.0 / 15.0) < 1e-9)
     }
 
+    @Test("Turning a dial while Live auto-enters Hold (spec §4.3)")
+    func dialEditAutoHolds() {
+        let source = FakeSource()
+        let controller = MeteringController(source: source)
+        controller.start()
+
+        source.emit(ev: 10)
+        #expect(!controller.isHeld)
+
+        controller.setDial(.aperture, to: 8.0)
+        #expect(controller.isHeld)
+        // The edit is applied against the frozen reading, so the solve keeps
+        // the EV-10 target: f/8 @ ISO 100 → 4 shutter stops → 1/15 s
+        // (nearest 1/3-stop table value).
+        #expect(abs((controller.displayedReading?.ev100 ?? -1) - 10) < 1e-6)
+        #expect(abs(controller.exposure.value(of: .aperture) - 8.0) < 1e-9)
+        #expect(abs(controller.exposure.value(of: .shutter) - 1.0 / 15.0) < 1e-9)
+    }
+
+    @Test("Turning a dial with no reading does not enter Hold")
+    func dialEditWithoutReadingStaysLive() {
+        let source = FakeSource()
+        let controller = MeteringController(source: source)
+        controller.start()
+
+        controller.setDial(.aperture, to: 8.0)
+        #expect(!controller.isHeld)
+    }
+
+    @Test("Nearby combinations are empty before any reading")
+    func combinationsEmptyWithoutReading() {
+        let source = FakeSource()
+        let controller = MeteringController(source: source)
+        controller.start()
+        #expect(controller.nearbyCombinations.isEmpty)
+    }
+
+    @Test("Applying a nearby combination row sets the anchor and re-solves")
+    func applyCombinationRow() {
+        let source = FakeSource()
+        let controller = MeteringController(source: source)
+        controller.start()
+
+        source.emit(ev: 10)
+        let rows = controller.nearbyCombinations
+        #expect(!rows.isEmpty)
+        let row = rows[0]
+
+        controller.applyCombination(row)
+
+        // The anchor dial takes the row's value and the third axis re-solves
+        // for the same target EV; the edit auto-entered Hold.
+        #expect(controller.isHeld)
+        #expect(abs(controller.exposure.value(of: row.settings.aperture.axis) - row.settings.aperture.value) < 1e-9)
+        #expect(abs(controller.exposure.value(of: row.settings.shutter.axis) - row.settings.shutter.value) < 1e-9)
+        #expect(abs((controller.displayedReading?.ev100 ?? -1) - 10) < 1e-6)
+    }
+
     #if DEBUG
     @Test("Default convenience init uses the real camera feed")
     func defaultFeedIsCamera() {
