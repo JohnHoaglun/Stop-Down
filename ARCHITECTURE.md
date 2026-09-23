@@ -19,4 +19,13 @@ The pure, deterministic meter core also lives in `Stop-Down/Domain/`:
 - `MeteringMode` / `NormalizedPoint` — center-weighted vs. spot metering and the normalized Spot point.
 - `MeterEngine` — deterministic stateful engine over sample timestamps (no hidden clock): 10 Hz rate cap, rolling 300 ms smoothing window, stability (≥3 samples within ±0.1 EV), and confidence precedence (clipped → dark → stable → stabilizing). Missing metadata preserves the last reading as `.stale`, or reports `.unavailable` when none exists.
 
-Exposure math and the meter engine are pure and deterministic and independent of camera hardware and UI. AVFoundation will supply native auto-exposure metadata as the EV authority. Luminance analysis only expresses confidence/instability and never alters the reported EV. Camera permissions, Photos saves, SwiftData history, and haptics will be isolated behind testable adapters. A DEBUG-only Test Meter will inject known readings.
+The metering layer lives in `Stop-Down/Metering/`, between the feed and the UI:
+
+- `MeteringSource` — the `@MainActor` feed seam that emits `MeterSample`s (the real camera source will conform to this; `TestMeterSource` conforms today).
+- `TestMeterSource` — DEBUG-only fixture feed at ~10 Hz with stable/unstable/dark/clipped scenarios and pause/step (spec 8.5); it is always presented as test data, never a true reading.
+- `ExposureState` — pure dial state: exactly two pinned axes (the locked axis and the anchor axis) plus one solved axis recomputed by `ExposureSolver` for the target EV (spec §4.3).
+- `MeteringController` — `@MainActor @Observable` controller that owns the `MeterEngine` and a `MeteringSource`, keeps a live reading plus a frozen held reading, and exposes configuration and dial operations. While held, incoming samples update the live reading but never re-solve the dials.
+
+`Stop-Down/Views/MeterScreen.swift` renders the meter (spec §4.2): EV readout, LIVE/HOLD state, low-confidence banner, lockable dials with the solved axis marked, filter compensation, stop-increment picker, Hold/Live + Save, and a DEBUG test-data bar. The UI talks only to `MeteringController`, so swapping the feed never touches the layout.
+
+Exposure math and the meter engine are pure and deterministic and independent of camera hardware and UI. AVFoundation will supply native auto-exposure metadata as the EV authority. Luminance analysis only expresses confidence/instability and never alters the reported EV. Camera permissions, Photos saves, SwiftData history, and haptics will be isolated behind testable adapters.

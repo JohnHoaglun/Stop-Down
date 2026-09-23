@@ -1,21 +1,15 @@
-//
-//  ContentView.swift
-//  Stop-Down
-//
-//  Created by John Hoaglun on 9/22/26.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @State private var controller: MeteringController
+
+    @MainActor
+    init() {
+        _controller = State(initialValue: MeteringController())
+    }
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        MeterScreen(controller: controller)
     }
 }
 
