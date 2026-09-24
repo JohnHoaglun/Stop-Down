@@ -174,7 +174,14 @@ public final class MeterEngine {
         case .centerWeighted:
             judgeLuma = sample.centerLuma
         }
-        if (judgeLuma ?? .infinity) < configuration.minJudgeLuma || sample.noise >= configuration.maxNoise {
+        // Dark by luma: the judging region is below the dark threshold.
+        let darkByLuma = (judgeLuma ?? .infinity) < configuration.minJudgeLuma
+        // Dark by noise: high noise only matters in a dim scene. In a bright
+        // scene the metadata EV stays authoritative, so noise must not flag it
+        // as dark (luma nil ⇒ no sample ⇒ treated as not-bright-exempt).
+        let darkByNoise = sample.noise >= configuration.maxNoise
+            && (judgeLuma ?? .infinity) < configuration.noiseJudgeLumaCeiling
+        if darkByLuma || darkByNoise {
             return (.dark, "Scene is dark or noisy.")
         }
 

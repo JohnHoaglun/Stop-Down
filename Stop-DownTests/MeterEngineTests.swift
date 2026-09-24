@@ -119,6 +119,49 @@ struct MeterEngineTests {
         #expect(reading.confidence.guidance?.isEmpty == false)
     }
 
+    @Test("a bright noisy scene is NOT flagged dark (outdoor false positive)")
+    func brightNoisyIsNotDark() {
+        let engine = MeterEngine()
+        for t in [0.0, 0.15, 0.30] {
+            _ = engine.process(sample(t, centerLuma: 0.9, noise: 0.9))
+        }
+        let reading = engine.currentReading!
+        // Luma 0.9 is above the noise ceiling, so high noise must not count.
+        #expect(reading.confidence == .stable)
+        #expect(reading.confidence.isLowConfidence == false)
+        #expect(abs((reading.ev100 ?? .infinity) - ev125) < 1e-9)
+    }
+
+    @Test("a dim noisy scene IS flagged dark")
+    func dimNoisyIsDark() {
+        let engine = MeterEngine()
+        for t in [0.0, 0.15, 0.30] {
+            _ = engine.process(sample(t, centerLuma: 0.3, noise: 0.9))
+        }
+        let reading = engine.currentReading!
+        // Luma 0.3 is above the dark-luma threshold but below the noise
+        // ceiling, and noise 0.9 is at/over maxNoise → dark.
+        #expect(reading.confidence == .dark)
+        #expect(reading.confidence.isLowConfidence)
+    }
+
+    @Test("noise gating boundary: exactly at the luma ceiling or noise floor")
+    func noiseGatingBoundary() {
+        // Luma exactly at the ceiling (0.5): noise no longer counts → stable.
+        let atCeiling = MeterEngine()
+        for t in [0.0, 0.15, 0.30] {
+            _ = atCeiling.process(sample(t, centerLuma: 0.5, noise: 0.9))
+        }
+        #expect(atCeiling.currentReading!.confidence == .stable)
+
+        // Noise exactly at maxNoise (0.5) in a dim scene → dark.
+        let atNoiseFloor = MeterEngine()
+        for t in [0.0, 0.15, 0.30] {
+            _ = atNoiseFloor.process(sample(t, centerLuma: 0.3, noise: 0.5))
+        }
+        #expect(atNoiseFloor.currentReading!.confidence == .dark)
+    }
+
     @Test("a clipped scene is low confidence (clipped)")
     func clippedScene() {
         let engine = MeterEngine()

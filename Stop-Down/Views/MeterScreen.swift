@@ -21,9 +21,12 @@ struct MeterScreen: View {
 
     var body: some View {
         GeometryReader { proxy in
+            // Responsive dial (spec §4.7: 190–240 pt, smaller on small
+            // screens) so the whole control stack fits the safe area.
+            let dialSize = min(192, max(160, proxy.size.height * 0.26))
             ZStack {
                 background
-                controls
+                controls(dialSize: dialSize)
                 spotReticle(viewSize: proxy.size)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
@@ -73,36 +76,53 @@ struct MeterScreen: View {
 
     // MARK: Control layer
 
-    private var controls: some View {
-        VStack(spacing: 12) {
-            TopBar(controller: controller)
+    /// The control stack. The top (lens/mode) and bottom (Hold/Save) bars are
+    /// pinned with safe-area insets so they stay fully on-screen and tappable
+    /// even when the middle content is tall; the middle content is sized to
+    /// fit between them.
+    private func controls(dialSize: CGFloat) -> some View {
+        VStack(spacing: 10) {
             AvailabilityBanner(controller: controller)
             #if DEBUG
             DebugTestBar(controller: controller)
             #endif
-            Spacer(minLength: 8)
+            Spacer(minLength: 4)
             CenterDial(
                 reading: controller.displayedReading,
-                isHeld: controller.isHeld
+                isHeld: controller.isHeld,
+                size: dialSize
             )
             ConfidenceBanner(reading: controller.displayedReading)
-            Spacer(minLength: 8)
+            Spacer(minLength: 4)
             ExposureWheels(controller: controller)
             CombinationList(controller: controller)
             IncrementAndCompensation(controller: controller)
-            if !saveMessage.isEmpty {
-                Text(saveMessage)
-                    .font(.caption)
-                    .foregroundStyle(MeterTheme.secondary)
-                    .transition(.opacity)
-            }
-            BottomBar(controller: controller) {
-                save()
-            }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
+        .padding(.top, 6)
+        .padding(.bottom, 6)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            TopBar(controller: controller)
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+                .padding(.bottom, 2)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 6) {
+                if !saveMessage.isEmpty {
+                    Text(saveMessage)
+                        .font(.caption)
+                        .foregroundStyle(MeterTheme.secondary)
+                        .transition(.opacity)
+                }
+                BottomBar(controller: controller) {
+                    save()
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
+            .padding(.bottom, 8)
+        }
     }
 
     // MARK: Spot reticle + tap-to-meter
@@ -227,8 +247,7 @@ private struct TopBar: View {
 private struct CenterDial: View {
     let reading: MeterReading?
     let isHeld: Bool
-
-    private static let dialSize: CGFloat = 220
+    var size: CGFloat = 192
 
     var body: some View {
         let ev = reading?.ev100
@@ -247,27 +266,33 @@ private struct CenterDial: View {
                     .font(.caption2.weight(.semibold))
                     .tracking(1.5)
                     .foregroundStyle(MeterTheme.secondary)
-                if let ev {
-                    Text(evText(ev))
-                        .font(.system(size: 64, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(MeterTheme.primary)
-                        .contentTransition(.numericText())
-                        .accessibilityLabel("Exposure value")
-                        .accessibilityValue(evText(ev))
-                        .accessibilityIdentifier("ev-readout")
-                } else {
-                    Text("—")
-                        .font(.system(size: 64, weight: .bold, design: .rounded))
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("EV")
+                        .font(.title3.weight(.semibold))
                         .foregroundStyle(MeterTheme.secondary)
-                        .accessibilityLabel("No reading")
-                        .accessibilityIdentifier("ev-readout")
+                        .accessibilityHidden(true)
+                    if let ev {
+                        Text(evText(ev))
+                            .font(.system(size: 54, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(MeterTheme.primary)
+                            .contentTransition(.numericText())
+                            .accessibilityLabel("Exposure value (EV100)")
+                            .accessibilityValue(evText(ev))
+                            .accessibilityIdentifier("ev-readout")
+                    } else {
+                        Text("—")
+                            .font(.system(size: 54, weight: .bold, design: .rounded))
+                            .foregroundStyle(MeterTheme.secondary)
+                            .accessibilityLabel("No reading")
+                            .accessibilityIdentifier("ev-readout")
+                    }
                 }
                 StatePill(isHeld: isHeld, confidence: reading?.confidence)
             }
-            .padding(28)
+            .padding(18)
         }
-        .frame(width: Self.dialSize, height: Self.dialSize)
+        .frame(width: size, height: size)
     }
 
     private var modeLabel: String {
@@ -325,23 +350,28 @@ private struct ConfidenceBanner: View {
     let reading: MeterReading?
 
     var body: some View {
-        if let reading, reading.confidence.isLowConfidence {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(reading.ev100 == nil ? "No reading yet" : "Low confidence")
-                    .font(.footnote.weight(.semibold))
-                if let guidance = reading.confidence.guidance {
-                    Text(guidance)
-                        .font(.caption)
+        Group {
+            if let reading, reading.confidence.isLowConfidence {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(reading.ev100 == nil ? "No reading yet" : "Low confidence")
+                        .font(.footnote.weight(.semibold))
+                    if let guidance = reading.confidence.guidance {
+                        Text(guidance)
+                            .font(.caption)
+                    }
                 }
+                .foregroundStyle(reading.ev100 == nil ? MeterTheme.secondary : MeterTheme.warning)
+                .frame(maxWidth: 340, alignment: .leading)
+                .padding(8)
+                .background(MeterTheme.panel, in: RoundedRectangle(cornerRadius: 10))
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Low confidence: \((reading.confidence.guidance) ?? "No reading yet")")
+                .accessibilityIdentifier("confidence-banner")
             }
-            .foregroundStyle(reading.ev100 == nil ? MeterTheme.secondary : MeterTheme.warning)
-            .frame(maxWidth: 340, alignment: .leading)
-            .padding(8)
-            .background(MeterTheme.panel, in: RoundedRectangle(cornerRadius: 10))
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Low confidence: \((reading.confidence.guidance) ?? "No reading yet")")
-            .accessibilityIdentifier("confidence-banner")
         }
+        // Reserved slot: the banner appears only when needed (spec §4.2) but
+        // its presence must not shift the rest of the layout.
+        .frame(minHeight: 48, alignment: .center)
     }
 }
 
@@ -463,7 +493,7 @@ private struct ExposureWheels: View {
     @Bindable var controller: MeteringController
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             ForEach(ExposureAxis.allCases, id: \.self) { axis in
                 dialRow(axis)
             }
@@ -532,7 +562,7 @@ private struct ExposureWheels: View {
             .accessibilityIdentifier("dial-increase-\(axis.rawValue)")
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
         .background(
             isLocked ? MeterTheme.accent.opacity(0.14) : MeterTheme.panel,
             in: RoundedRectangle(cornerRadius: 12)
@@ -595,7 +625,7 @@ private struct CombinationList: View {
                         .font(.caption.monospacedDigit())
                         .contentTransition(.numericText())
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 3)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -625,7 +655,7 @@ private struct IncrementAndCompensation: View {
     @Bindable var controller: MeteringController
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             HStack {
                 Text("Stop increment")
                     .font(.subheadline)

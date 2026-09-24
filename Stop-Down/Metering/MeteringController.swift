@@ -193,13 +193,15 @@ public final class MeteringController {
 
     /// Nearby equivalent combinations for the displayed target EV (spec
     /// §4.3): the compact list shown below the wheels. Empty until a reading
-    /// exists.
+    /// exists. The list is capped at the three nearest rows so the screen
+    /// stays compact (the domain finder defaults to 5).
     public var nearbyCombinations: [EquivalentCombination] {
         guard let ev = displayedReading?.ev100 else { return [] }
         return EquivalentCombinationFinder.nearbyCombinations(
             state: exposure,
             targetEV100: ev,
-            compensationStops: filterCompensationEV
+            compensationStops: filterCompensationEV,
+            limit: 3
         )
     }
 

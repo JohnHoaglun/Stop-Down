@@ -40,8 +40,13 @@ public struct MeterConfiguration: Equatable, Sendable {
     public var minJudgeLuma: Double
     /// At or above this clipping fraction the reading is judged "clipped".
     public var maxClipping: Double
-    /// At or above this noise level the reading is judged "dark".
+    /// At or above this noise level the reading is judged "dark" — but only
+    /// when the judging luma is also below `noiseJudgeLumaCeiling`.
     public var maxNoise: Double
+    /// The noise criterion applies only when the judging luma is below this
+    /// level. Noise in a bright scene does not compromise the metadata EV
+    /// (which stays authoritative), so it must not flag the scene as dark.
+    public var noiseJudgeLumaCeiling: Double
 
     public init(
         mode: MeteringMode = .centerWeighted,
@@ -54,7 +59,8 @@ public struct MeterConfiguration: Equatable, Sendable {
         maxSamplesPerSecond: Double = 10,
         minJudgeLuma: Double = 0.06,
         maxClipping: Double = 0.10,
-        maxNoise: Double = 0.50
+        maxNoise: Double = 0.50,
+        noiseJudgeLumaCeiling: Double = 0.50
     ) {
         self.mode = mode
         self.lens = lens
@@ -67,6 +73,7 @@ public struct MeterConfiguration: Equatable, Sendable {
         self.minJudgeLuma = minJudgeLuma
         self.maxClipping = maxClipping
         self.maxNoise = maxNoise
+        self.noiseJudgeLumaCeiling = noiseJudgeLumaCeiling
     }
 
     /// Minimum interval (seconds) between processed samples implied by the cap.
