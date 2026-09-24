@@ -49,6 +49,7 @@ final class Stop_DownUITests: XCTestCase {
     @MainActor
     func testPrimaryControlsFitOnScreen() throws {
         let app = XCUIApplication()
+        app.terminate() // isolate from any state left by other tests
         app.launch()
 
         // On the simulator the first camera access presents a system
@@ -66,9 +67,11 @@ final class Stop_DownUITests: XCTestCase {
 
         // Switch to the DEBUG test feed so the dial and the equivalent list
         // are fully populated regardless of the simulator's virtual camera.
-        let feedPicker = app.segmentedControls["debug-feed-picker"]
-        XCTAssertTrue(feedPicker.waitForExistence(timeout: 10))
-        feedPicker.children(matching: .other).element(boundBy: 1).tap() // "Test data"
+        // On the current simulator runtime the feed picker's segments are
+        // exposed as buttons, so tap the "Test data" segment by label.
+        let testFeedSegment = app.buttons["Test data"]
+        XCTAssertTrue(testFeedSegment.waitForExistence(timeout: 10), "DEBUG feed picker should offer a 'Test data' segment")
+        testFeedSegment.tap()
 
         let evReadout = app.staticTexts["ev-readout"]
         XCTAssertTrue(evReadout.waitForExistence(timeout: 10), "EV readout should appear on the test feed")
@@ -92,9 +95,61 @@ final class Stop_DownUITests: XCTestCase {
         XCTAssert(mode.frame.minY >= screen.minY, "Mode picker extends above the screen: \(mode.frame)")
 
         // Middle content: the equivalent list sits between the bars, on-screen.
-        let list = app.children(matching: .any).element(matching: .any, identifier: "equivalent-list")
+        // On the current simulator runtime the list is exposed as an
+        // XCUIElementType.other element, so query it by that type.
+        let list = app.otherElements["equivalent-list"]
         XCTAssertTrue(list.waitForExistence(timeout: 10), "Equivalent-exposure list should appear on the test feed")
         XCTAssert(list.frame.maxY <= screen.maxY, "Equivalent list extends below the screen: \(list.frame)")
         XCTAssert(list.frame.minY >= screen.minY, "Equivalent list extends above the screen: \(list.frame)")
+    }
+
+    /// Release readiness: the bottom-bar info button opens the About sheet,
+    /// which shows the app name, the live bundle version (marketing version
+    /// plus build number, so it can never drift from the Xcode build
+    /// settings), the privacy statement, and the support link; the sheet
+    /// closes again.
+    @MainActor
+    func testAboutSheetShowsVersionAndSupportLink() throws {
+        let app = XCUIApplication()
+        app.terminate() // isolate from any state left by other tests
+        app.launch()
+
+        // On the simulator the first camera access presents a system
+        // permission dialog (a Springboard overlay) a moment after launch;
+        // poll briefly and dismiss it so the meter screen is reachable.
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.Springboard")
+        for _ in 0..<10 { // up to ~5 s
+            let permissionDialog = springboard.alerts.firstMatch
+            if permissionDialog.exists {
+                permissionDialog.buttons["Allow"].tap()
+                break
+            }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+
+        let aboutButton = app.buttons["about-button"]
+        XCTAssertTrue(aboutButton.waitForExistence(timeout: 10), "About button missing in the bottom bar")
+        aboutButton.tap()
+
+        let version = app.staticTexts["about-version"]
+        XCTAssertTrue(version.waitForExistence(timeout: 5), "About sheet should show a version line")
+        XCTAssertTrue(
+            version.label.hasPrefix("Version "),
+            "Version line should read like 'Version 1.0 (11)': \(version.label)"
+        )
+
+        // The support link is exposed as an XCUIElementType.link element,
+        // so query it by that type.
+        let support = app.links["support-link"]
+        XCTAssertTrue(support.waitForExistence(timeout: 10), "About sheet should show the support link")
+        XCTAssertTrue(
+            support.label.contains("hoaglun.com/stop-down"),
+            "Unexpected support link label: \(support.label)"
+        )
+
+        let close = app.buttons["about-close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 5), "About sheet should have a close button")
+        close.tap()
+        XCTAssertFalse(version.exists, "About sheet should close")
     }
 }

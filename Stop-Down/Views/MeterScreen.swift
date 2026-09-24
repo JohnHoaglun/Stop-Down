@@ -13,6 +13,7 @@ struct MeterScreen: View {
     @State private var controller: MeteringController
     @State private var saveMessage = ""
     @State private var saveTask: Task<Void, Never>?
+    @State private var showAbout = false
 
     @MainActor
     init(controller: MeteringController) {
@@ -39,6 +40,11 @@ struct MeterScreen: View {
         .onDisappear { controller.stop() }
         .preferredColorScheme(.dark)
         .animation(.easeInOut(duration: 0.15), value: saveMessage)
+        .sheet(isPresented: $showAbout) {
+            AboutSheet()
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: Background
@@ -115,7 +121,9 @@ struct MeterScreen: View {
                         .foregroundStyle(MeterTheme.secondary)
                         .transition(.opacity)
                 }
-                BottomBar(controller: controller) {
+                BottomBar(controller: controller, onAbout: {
+                    showAbout = true
+                }) {
                     save()
                 }
             }
@@ -732,10 +740,23 @@ private struct IncrementAndCompensation: View {
 
 private struct BottomBar: View {
     @Bindable var controller: MeteringController
+    var onAbout: () -> Void
     var onSave: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
+            Button {
+                onAbout()
+            } label: {
+                Image(systemName: "info.circle")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+            .tint(MeterTheme.secondary)
+            .accessibilityLabel("About Stop-Down")
+            .accessibilityHint("Shows version and support")
+            .accessibilityIdentifier("about-button")
+
             Button {
                 controller.toggleHold()
             } label: {
@@ -757,6 +778,81 @@ private struct BottomBar: View {
             .accessibilityIdentifier("save")
         }
         .controlSize(.large)
+    }
+}
+
+// MARK: - About sheet (release readiness: version, privacy, support)
+
+private struct AboutSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private static let supportURL = URL(string: "https://www.hoaglun.com/stop-down")!
+    private static let supportDisplay = "www.hoaglun.com/stop-down"
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(MeterTheme.secondary)
+                }
+                .accessibilityLabel("Close")
+                .accessibilityIdentifier("about-close")
+            }
+            .padding(.horizontal, 8)
+            .padding(.top, 4)
+
+            Text("Stop-Down")
+                .font(.title2.weight(.bold))
+                .foregroundStyle(MeterTheme.primary)
+            Text("Reflected-light exposure meter")
+                .font(.subheadline)
+                .foregroundStyle(MeterTheme.secondary)
+
+            Text(versionText)
+                .font(.footnote)
+                .foregroundStyle(MeterTheme.secondary)
+                .accessibilityIdentifier("about-version")
+
+            Text("All metering and history stay on this device. No accounts, analytics, or network requests.")
+                .font(.footnote)
+                .foregroundStyle(MeterTheme.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 320)
+
+            Link(destination: Self.supportURL) {
+                Text(Self.supportDisplay)
+                    .font(.footnote.weight(.semibold))
+                    .underline()
+            }
+            .tint(MeterTheme.accent)
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("Opens \(Self.supportDisplay)")
+            .accessibilityIdentifier("support-link")
+            .padding(.top, 2)
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .preferredColorScheme(.dark)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("about-sheet")
+    }
+
+    /// Read from the bundle so the displayed version can never drift from
+    /// the Xcode build settings that generate the Info.plist values.
+    private var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = (info?["CFBundleShortVersionString"] as? String) ?? "1.0"
+        let build = (info?["CFBundleVersion"] as? String) ?? "1"
+        return "Version \(version) (\(build))"
     }
 }
 
